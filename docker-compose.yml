@@ -34,6 +34,33 @@ services:
     networks:
       - zplatform-network
 
+  redis:
+    image: redis:6-alpine
+    container_name: zplatform_redis
+    entrypoint: redis-server --appendonly no --save ""
+    ports:
+      - 6379:6379
+    networks:
+      - zplatform-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./docker/development/django/Dockerfile
+    container_name: zplatform_worker
+    command: /worker
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - api
+    networks:
+      - zplatform-network
+
 networks:
   zplatform-network:
     driver: bridge

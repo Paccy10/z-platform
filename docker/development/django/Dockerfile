@@ -30,4 +30,8 @@ COPY ./docker/development/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
+COPY ./docker/development/django/worker /worker
+RUN sed -i 's/\r$//g' /worker
+RUN chmod +x /worker
+
 ENTRYPOINT [ "/entrypoint" ]
