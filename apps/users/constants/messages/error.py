@@ -19,4 +19,8 @@ errors = {
         "min_length": "The password must have at least 8 characters",
         "weak": "The password must contain at least 1 uppercase, 1 lowercase and 1 special character",
     },
+    "token": {
+        "expired": "The token is expired",
+        "invalid": "The token is invalid",
+    },
 }
