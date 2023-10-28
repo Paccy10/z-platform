@@ -1,14 +1,19 @@
 import jwt
+import random
+import string
+import datetime
 from rest_framework import generics, mixins, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from django.urls import reverse
 from django.template.loader import get_template
 from django_rq import enqueue
+from django.contrib.auth.hashers import make_password
 
 from apps.users.models import User
-from apps.users.serializers import UserSerializer, LoginSerializer
+from apps.users.serializers import UserSerializer, LoginSerializer, VerifyOTPSerializer
 from apps.users.constants.messages.error import errors
+from apps.users.constants.messages.success import OTP_SENT
 from apps.common.utils import send_email
 from core.settings.base import env
 
@@ -66,6 +71,29 @@ class UserLoginView(generics.GenericAPIView):
     """User login view"""
 
     serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Send OTP
+        user = serializer.validated_data
+        otp = "".join(random.choice(string.digits) for _ in range(6))
+        user.otp = make_password(otp)
+        user.otp_expired_at = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        user.save()
+
+        subject = "Login OTP"
+        message = get_template("otp.html").render({"user": user, "otp": otp})
+        enqueue(send_email, subject, message, [user.email])
+
+        return Response({"detail": OTP_SENT}, status=status.HTTP_200_OK)
+
+
+class VerifyOTPView(generics.GenericAPIView):
+    """Verify OTP view"""
+
+    serializer_class = VerifyOTPSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)

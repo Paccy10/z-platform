@@ -28,4 +28,11 @@ errors = {
         "disabled": "The account is not activated. Please check your email",
         "no_account": "No account with the provided credentials",
     },
+    "otp": {
+        "required": "The OTP is required",
+        "blank": "The OTP can't be blank",
+        "length": "The OTP must be 6 digits",
+        "invalid": "Invalid OTP",
+        "expired": "The OTP has expired",
+    },
 }
