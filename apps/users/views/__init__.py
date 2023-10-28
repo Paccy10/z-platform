@@ -1,1 +1,1 @@
-from .auth import UserSignupView, UserConfirmationView
+from .auth import UserSignupView, UserConfirmationView, UserLoginView

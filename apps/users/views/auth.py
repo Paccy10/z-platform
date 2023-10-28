@@ -7,7 +7,7 @@ from django.template.loader import get_template
 from django_rq import enqueue
 
 from apps.users.models import User
-from apps.users.serializers import UserSerializer
+from apps.users.serializers import UserSerializer, LoginSerializer
 from apps.users.constants.messages.error import errors
 from apps.common.utils import send_email
 from core.settings.base import env
@@ -60,3 +60,15 @@ class UserConfirmationView(generics.GenericAPIView):
                 {"token": [errors["token"]["invalid"]]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class UserLoginView(generics.GenericAPIView):
+    """User login view"""
+
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
