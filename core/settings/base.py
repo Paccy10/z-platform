@@ -149,3 +149,10 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": datetime.timedelta(hours=1)}
+
+# REST_FRAMEWORK
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ]
+}
