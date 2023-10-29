@@ -36,3 +36,4 @@ errors = {
         "expired": "The OTP has expired",
     },
 }
+USER_NOT_FOUND = "User not found"

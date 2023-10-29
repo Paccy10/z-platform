@@ -100,3 +100,37 @@ class VerifyOTPSerializer(serializers.Serializer):
         user.save()
 
         return tokens
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    """Forgot password serializer"""
+
+    email = serializers.EmailField(
+        error_messages={
+            "required": errors["email"]["required"],
+            "blank": errors["email"]["blank"],
+            "invalid": errors["email"]["invalid"],
+        },
+    )
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """Reset user password serializer"""
+
+    password = serializers.CharField(
+        required=True,
+        min_length=8,
+        max_length=100,
+        write_only=True,
+        validators=[
+            RegexValidator(
+                regex="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).+$",
+                message=errors["password"]["weak"],
+            )
+        ],
+        error_messages={
+            "required": errors["password"]["required"],
+            "blank": errors["password"]["blank"],
+            "min_length": errors["password"]["min_length"],
+        },
+    )
