@@ -10,6 +10,10 @@ from .views import (
     ResetPasswordView,
     GenerateLoginLinkView,
     VerifyLoginLinkView,
+    VerificationRequestView,
+    VerificationRequestsView,
+    VerificationRequestDetailsView,
+    VerificationRequestReviewView,
 )
 
 urlpatterns = [
@@ -30,4 +34,22 @@ urlpatterns = [
         name="verify-login-link",
     ),
     path("profile/me/", MyProfileView.as_view(), name="my-profile"),
+    path(
+        "profile/me/verify/", VerificationRequestView.as_view(), name="verify-request"
+    ),
+    path(
+        "profile/verification/requests/",
+        VerificationRequestsView.as_view(),
+        name="get-verification-requests",
+    ),
+    path(
+        "profile/verification/requests/<slug:id>/",
+        VerificationRequestDetailsView.as_view(),
+        name="get-verification-request-details",
+    ),
+    path(
+        "profile/verification/requests/<slug:id>/review/",
+        VerificationRequestReviewView.as_view(),
+        name="review-verification-request",
+    ),
 ]

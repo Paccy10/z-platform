@@ -15,4 +15,10 @@ errors = {
         "required": "The nationality is required",
         "blank": "The nationality can't be blank",
     },
+    "id_document_number": {
+        "required": "The ID document number is required",
+        "blank": "The ID document number can't be blank",
+    },
 }
+REQUEST_NOT_FOUND = "Verification request not found"
+REQUEST_ALREADY_REVIEWED = "Verification request already reviewed"

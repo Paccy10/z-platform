@@ -8,4 +8,10 @@ from .auth import (
     GenerateLoginLinkView,
     VerifyLoginLinkView,
 )
-from .user import MyProfileView
+from .user import (
+    MyProfileView,
+    VerificationRequestView,
+    VerificationRequestsView,
+    VerificationRequestDetailsView,
+    VerificationRequestReviewView,
+)

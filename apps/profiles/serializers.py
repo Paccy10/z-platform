@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
-from .models import Profile
+from .models import Profile, AccountVerification
 from apps.common.serializers import BaseSerializer
 from apps.users.constants.messages.error import errors as user_errors
 from .constants.messages.error import errors as profile_errors
 from .constants.gender import Gender
 from .constants.marital_status import MaritalStatus
+from .constants.status import RequestAnswer
 
 
 class ProfileDisplaySerializer(serializers.ModelSerializer):
@@ -93,3 +94,50 @@ class EditProfileSerializer(serializers.Serializer):
             "country",
             "city",
         ]
+
+
+class VerificationRequestSerializer(serializers.ModelSerializer):
+    id_document_number = serializers.CharField(
+        error_messages={
+            "required": profile_errors["id_document_number"]["required"],
+            "blank": profile_errors["id_document_number"]["blank"],
+        }
+    )
+    id_document_image = serializers.ImageField()
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = AccountVerification
+        fields = [
+            "id_document_number",
+            "id_document_image",
+            "user",
+            "status",
+        ] + BaseSerializer.Meta.fields
+
+
+class VerificationRequestDisplaySerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField(method_name="get_user")
+
+    class Meta:
+        model = AccountVerification
+        fields = [
+            "id_document_number",
+            "id_document_image",
+            "user",
+            "status",
+        ] + BaseSerializer.Meta.fields
+
+    def get_user(self, obj):
+        return {
+            "id": obj.user.id,
+            "firstname": obj.user.firstname,
+            "lastname": obj.user.lastname,
+            "status": obj.user.profile.status,
+        }
+
+
+class VerificationRequestReviewSerializer(serializers.Serializer):
+    answer = serializers.ChoiceField(
+        choices=[(status.value, status.value) for status in RequestAnswer],
+    )

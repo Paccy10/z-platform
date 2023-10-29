@@ -11,7 +11,7 @@ User = get_user_model()
 class AccountVerification(BaseModel):
     """Account verification requests model"""
 
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User, related_name="account_verification", on_delete=models.CASCADE
     )
     id_document_number = models.CharField(max_length=20, null=True)
