@@ -5,5 +5,7 @@ from .auth import (
     VerifyOTPView,
     ForgotPasswordView,
     ResetPasswordView,
+    GenerateLoginLinkView,
+    VerifyLoginLinkView,
 )
 from .user import MyProfileView

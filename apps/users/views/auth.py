@@ -10,6 +10,9 @@ from django.urls import reverse
 from django.template.loader import get_template
 from django_rq import enqueue
 from django.contrib.auth.hashers import make_password
+from django.core.signing import dumps, loads
+from django.utils.encoding import force_bytes, smart_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 from apps.users.models import User
 from apps.users.serializers import (
@@ -18,12 +21,14 @@ from apps.users.serializers import (
     VerifyOTPSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
+    generate_tokens,
 )
 from apps.users.constants.messages.error import USER_NOT_FOUND, errors
 from apps.users.constants.messages.success import (
     OTP_SENT,
     PASSWORD_RESET_LINK_SENT,
     PASSWORD_RESET,
+    LOGIN_LINK_SENT,
 )
 from apps.common.utils import send_email
 from core.settings.base import env
@@ -160,6 +165,66 @@ class ResetPasswordView(generics.GenericAPIView):
             user.save()
 
             return Response({"detail": PASSWORD_RESET}, status=status.HTTP_200_OK)
+        except jwt.ExpiredSignatureError:
+            return Response(
+                {"token": [errors["token"]["expired"]]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except jwt.DecodeError:
+            return Response(
+                {"token": [errors["token"]["invalid"]]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class GenerateLoginLinkView(generics.GenericAPIView):
+    """Generate login link view"""
+
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            raise NotFound(USER_NOT_FOUND)
+
+        token = RefreshToken.for_user(user).access_token
+        signed_token = urlsafe_base64_encode(force_bytes(dumps({"token": str(token)})))
+        current_path = reverse("verify-login-link")
+        url = f"{request.scheme}://{request.get_host()}{current_path}?token={signed_token}"
+        subject = "Login Link"
+        message = get_template("login-link.html").render({"user": user, "url": url})
+        enqueue(send_email, subject, message, [user.email])
+
+        return Response({"detail": LOGIN_LINK_SENT}, status=status.HTTP_200_OK)
+
+
+class VerifyLoginLinkView(generics.GenericAPIView):
+    """Verify login link view"""
+
+    serializer_class = ForgotPasswordSerializer
+
+    def get(self, request):
+        signed_token = request.GET.get("token")
+
+        try:
+            token_payload = loads(smart_str(urlsafe_base64_decode(signed_token)))
+        except Exception:
+            return Response(
+                {"token": [errors["token"]["invalid"]]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token = token_payload.get("token")
+        try:
+            payload = jwt.decode(token, env("SECRET_KEY"), algorithms=["HS256"])
+            user = User.objects.get(id=payload["user_id"])
+
+            return Response(generate_tokens(user), status=status.HTTP_200_OK)
         except jwt.ExpiredSignatureError:
             return Response(
                 {"token": [errors["token"]["expired"]]},
