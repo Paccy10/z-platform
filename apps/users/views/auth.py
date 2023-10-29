@@ -5,15 +5,26 @@ import datetime
 from rest_framework import generics, mixins, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.urls import reverse
 from django.template.loader import get_template
 from django_rq import enqueue
 from django.contrib.auth.hashers import make_password
 
 from apps.users.models import User
-from apps.users.serializers import UserSerializer, LoginSerializer, VerifyOTPSerializer
-from apps.users.constants.messages.error import errors
-from apps.users.constants.messages.success import OTP_SENT
+from apps.users.serializers import (
+    UserSerializer,
+    LoginSerializer,
+    VerifyOTPSerializer,
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
+)
+from apps.users.constants.messages.error import USER_NOT_FOUND, errors
+from apps.users.constants.messages.success import (
+    OTP_SENT,
+    PASSWORD_RESET_LINK_SENT,
+    PASSWORD_RESET,
+)
 from apps.common.utils import send_email
 from core.settings.base import env
 
@@ -100,3 +111,62 @@ class VerifyOTPView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordView(generics.GenericAPIView):
+    """Forgot password view"""
+
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            raise NotFound(USER_NOT_FOUND)
+
+        token = RefreshToken.for_user(user).access_token
+        current_path = reverse("reset-password")
+        url = (
+            f"{request.scheme}://{request.get_host()}{current_path}?token={str(token)}"
+        )
+        subject = "Forgot Password"
+        message = get_template("forgot-password.html").render(
+            {"user": user, "url": url}
+        )
+        enqueue(send_email, subject, message, [user.email])
+
+        return Response({"detail": PASSWORD_RESET_LINK_SENT}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordView(generics.GenericAPIView):
+    """Reset password view"""
+
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = request.GET.get("token")
+        try:
+            payload = jwt.decode(token, env("SECRET_KEY"), algorithms=["HS256"])
+            user = User.objects.get(id=payload["user_id"])
+
+            user.set_password(serializer.validated_data["password"])
+            user.save()
+
+            return Response({"detail": PASSWORD_RESET}, status=status.HTTP_200_OK)
+        except jwt.ExpiredSignatureError:
+            return Response(
+                {"token": [errors["token"]["expired"]]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except jwt.DecodeError:
+            return Response(
+                {"token": [errors["token"]["invalid"]]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
