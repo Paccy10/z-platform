@@ -11,3 +11,8 @@ class RequestStatus(Enum):
     PENDING = "Pending"
     APPROVED = "Approved"
     REJECTED = "Rejected"
+
+
+class RequestAnswer(Enum):
+    APPROVE = "Approve"
+    REJECT = "Reject"

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .content {
+        background: white;
+        max-width: 600px;
+        padding: 23px 23px 50px;
+        margin-top: 33px;
+        margin-bottom: 30px;
+        border: 1px solid rgb(232, 232, 232);
+        border-radius: 5px;
+        box-shadow: rgb(128, 93, 93) 0px 0px 41px -24px;
+        float: left;
+        padding-left: 2vw;
+        padding-right: calc(10vw + 15px);
+        width: 100%;
+        margin-left: 55px;
+      }
+
+      .footer span {
+        display: block;
+      }
+
+      .footer span:nth-child(2) {
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <p>Hello <strong>{{user.firstname}}</strong>,</p>
+      <p>Your verification request status is <strong>{{status}}</strong></p>
+      <p class="footer">
+        <span>Best Regards,</span>
+        <span>Team ZPlatform</span>
+      </p>
+    </div>
+  </body>
+</html>
