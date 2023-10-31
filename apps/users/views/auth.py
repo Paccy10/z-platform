@@ -2,13 +2,13 @@ import jwt
 import random
 import string
 import datetime
+import django_rq
 from rest_framework import generics, mixins, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.urls import reverse
 from django.template.loader import get_template
-from django_rq import enqueue
 from django.contrib.auth.hashers import make_password
 from django.core.signing import dumps, loads
 from django.utils.encoding import force_bytes, smart_str
@@ -52,7 +52,7 @@ class UserSignupView(mixins.CreateModelMixin, generics.GenericAPIView):
         )
         subject = "Email Confirmation"
         message = get_template("confirmation.html").render({"user": user, "url": url})
-        enqueue(send_email, subject, message, [user.email])
+        django_rq.enqueue(send_email, subject, message, [user.email])
 
         return response
 
@@ -101,7 +101,7 @@ class UserLoginView(generics.GenericAPIView):
 
         subject = "Login OTP"
         message = get_template("otp.html").render({"user": user, "otp": otp})
-        enqueue(send_email, subject, message, [user.email])
+        django_rq.enqueue(send_email, subject, message, [user.email])
 
         return Response({"detail": OTP_SENT}, status=status.HTTP_200_OK)
 
@@ -142,7 +142,7 @@ class ForgotPasswordView(generics.GenericAPIView):
         message = get_template("forgot-password.html").render(
             {"user": user, "url": url}
         )
-        enqueue(send_email, subject, message, [user.email])
+        django_rq.enqueue(send_email, subject, message, [user.email])
 
         return Response({"detail": PASSWORD_RESET_LINK_SENT}, status=status.HTTP_200_OK)
 
@@ -198,7 +198,7 @@ class GenerateLoginLinkView(generics.GenericAPIView):
         url = f"{request.scheme}://{request.get_host()}{current_path}?token={signed_token}"
         subject = "Login Link"
         message = get_template("login-link.html").render({"user": user, "url": url})
-        enqueue(send_email, subject, message, [user.email])
+        django_rq.enqueue(send_email, subject, message, [user.email])
 
         return Response({"detail": LOGIN_LINK_SENT}, status=status.HTTP_200_OK)
 

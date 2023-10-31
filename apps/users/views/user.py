@@ -1,10 +1,10 @@
+import django_rq
 from datetime import date
 from rest_framework import generics, status, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.template.loader import get_template
-from django_rq import enqueue
 
 from apps.profiles.models import Profile, AccountVerification
 from apps.profiles.serializers import (
@@ -157,7 +157,9 @@ class VerificationRequestReviewView(generics.GenericAPIView):
         message = get_template("verification.html").render(
             {"user": verification_request.user, "status": verification_request.status}
         )
-        enqueue(send_email, subject, message, [verification_request.user.email])
+        django_rq.enqueue(
+            send_email, subject, message, [verification_request.user.email]
+        )
 
         return Response(
             VerificationRequestDisplaySerializer(
