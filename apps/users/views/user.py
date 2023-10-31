@@ -92,7 +92,7 @@ class VerificationRequestView(mixins.CreateModelMixin, generics.GenericAPIView):
 class VerificationRequestsView(mixins.ListModelMixin, generics.GenericAPIView):
     """User verification requests view"""
 
-    queryset = AccountVerification.objects.all()
+    queryset = AccountVerification.objects.prefetch_related("user").all()
     serializer_class = VerificationRequestDisplaySerializer
     permission_classes = [IsAuthenticated]
     search_fields = [
