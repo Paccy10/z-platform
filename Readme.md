@@ -49,3 +49,9 @@ docker compose down
 ```
 docker compose logs
 ```
+
+- Run tests
+
+```
+docker compose exec api pytest
+```
