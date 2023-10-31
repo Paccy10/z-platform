@@ -39,7 +39,7 @@ services:
     container_name: zplatform_redis
     entrypoint: redis-server --appendonly no --save ""
     ports:
-      - 6380:6379
+      - 6379:6379
     networks:
       - zplatform-network
 
